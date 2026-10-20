@@ -1,6 +1,6 @@
 LODESTAR HELIOS - FEATURES AND COMMANDS
 by FEAR REACTIVE
-Current version: alpha3   (no GPS)
+Current version: alpha4   (no GPS)
 Last updated: 2026-10-19
 
 HELIOS is the LODESTAR PULSAR repeater firmware for the Seeed SenseCAP Solar Node (nRF52840), plus a read-only battery watch.
@@ -28,7 +28,7 @@ HELIOS COMMANDS
 ----------------------------------------------------------------
 firmware
     Shows the firmware name and version.
-    Example reply:  LODESTAR HELIOS alpha3 (no GPS)
+    Example reply:  LODESTAR HELIOS alpha4 (no GPS)
 
 helios
     Battery status in one line.
@@ -81,6 +81,6 @@ Do this before any planned reboot; the history is lost when the node restarts.
 ----------------------------------------------------------------
 CHANGE LOG
 ----------------------------------------------------------------
-alpha3 (2026-10-19)  Added the "firmware" command (name and version). Added this document.
+alpha4 (2026-10-19)  Added the "firmware" command (name and version). Added this document.
 alpha2 (2026-10-19)  "helios history" now returns the hours in the reply (it only went to USB serial before), 8 hours per page. Added "helios stats".
 alpha1 (2026-10-19)  First release: battery watch with "helios" and "helios history", on top of PULSAR.
