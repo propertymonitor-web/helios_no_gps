@@ -37,7 +37,7 @@ Run **Actions > Build ... > Run workflow**. Tick *publish* and enter a NEW tag t
 ## License
 Patches and added code follow MeshCore's license (MIT).
 
-Full list and examples: [HELIOS-FEATURES-AND-COMMANDS.txt](HELIOS-FEATURES-AND-COMMANDS.txt).
+Full list and examples: [HELIOS-FEATURES-AND-COMMANDS.txt](HELIOS-FEATURES-AND-COMMANDS.txt). Flashing and start-up: [HELIOS-FLASHING-AND-STARTUP.txt](HELIOS-FLASHING-AND-STARTUP.txt).
 
 ## Other useful MeshCore commands
 These are standard MeshCore repeater commands, handy alongside HELIOS: `ver`, `board`, `clock`, `stats-core`, `stats-radio`, `stats-packets`, `neighbors`, `powersaving`, `log`.

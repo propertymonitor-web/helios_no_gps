@@ -1,0 +1,144 @@
+LODESTAR HELIOS - FLASHING GUIDE AND START-UP REFERENCE
+by FEAR REACTIVE
+For: Seeed SenseCAP Solar Node P1 WITHOUT GPS (nRF52840), firmware "helios_no_gps"
+Current version: alpha4     Last updated: 2026-10-19
+
+ALPHA software. Not proven in the field. Keep a way to reach the node (USB cable) until you trust it.
+
+================================================================
+PART 1 - WHAT YOU NEED
+================================================================
+- The firmware from the Releases page of github.com/propertymonitor-web/helios-gps (pick the newest "helios-p1-pro-alphaN"):
+    firmware.uf2   for Method A (drag and drop)
+    firmware.zip   for Method B (MeshCore web flasher)
+- A USB data cable (a charge-only cable will not work).
+- A computer with Chrome or Edge (Method B needs one of them; Web Serial is not in Firefox or Safari).
+- The antenna attached before you power the board. Never run a LoRa radio without its antenna.
+
+Which firmware for which board:
+    SenseCAP Solar Node P1-Pro (has GPS)      -> helios-gps
+    SenseCAP Solar Node P1 without GPS        -> helios_no_gps
+    Not sure? The P1-Pro has a built-in GPS. If the board's label or box says P1-Pro, use helios-gps.
+
+================================================================
+PART 2 - METHOD A: DRAG AND DROP (UF2)   <- the method Seeed documents
+================================================================
+1. Plug the board into the computer with the USB cable.
+2. Double-tap the RST (reset) button, quickly. The board restarts as a USB drive (named Xiao-Boot or Solar Node).
+   If it does not show up, try a faster double-tap, or a different cable/port.
+3. Drag firmware.uf2 onto that drive.
+4. The drive disappears and the board reboots by itself. That means it worked.
+5. Skip to PART 4 (first start-up).
+
+The drive also shows INFO_UF2.TXT, INDEX.HTM and CURRENT.UF2. They belong to the bootloader. Leave them alone.
+Seeed's guide also describes an erase step, useful when coming from other firmware:
+    https://wiki.seeedstudio.com/get_started_with_meshcore_solar_node/
+
+================================================================
+PART 3 - METHOD B: MESHCORE WEB FLASHER (ZIP)
+================================================================
+NOTE: This route is not tested by the author for this board. If it does not work, use Method A.
+
+1. Open https://flasher.meshcore.io in Chrome or Edge.
+2. Choose Custom Firmware.
+3. Select firmware.zip (the Nordic DFU package; there is no .bin for this board).
+4. Connect the board and choose it in the serial-port list. If the board is not listed, double-tap RST first and try again.
+5. Start the flash and wait until it says it is finished. Do not unplug until then.
+6. Continue to PART 4.
+
+================================================================
+PART 4 - FIRST START-UP (do these in order)
+================================================================
+Open a serial terminal on the board (USB), or log in as admin from a MeshCore companion app. Then:
+
+1. firmware
+     Should reply: LODESTAR HELIOS alpha4 (P1-Pro, GPS)
+     If it shows an older version or nothing, the flash did not take. Repeat PART 2.
+
+2. password <your-new-password>
+     CHANGE THE DEFAULT ("password") before the node goes anywhere public.
+
+3. set name <your node name>
+     The name other nodes see in adverts.
+
+4. Radio settings must match the rest of your local mesh (frequency, bandwidth, spreading factor, coding rate).
+     Check your area's settings and the MeshCore docs: https://docs.meshcore.io
+     A node on the wrong settings hears nothing and nobody hears it.
+
+5. gps on
+     The GPS is off until you turn it on. Give it a clear view of the sky; a first fix can take several minutes.
+     Then check with:  gps      (example reply: "on, active, fix, 7 sats")
+     When it has a fix:  gps sync      sets the node clock from GPS
+                         gps setloc    saves the GPS position as the node's location
+   (No GPS fix yet, or indoors? You can set the position by hand with: set lat <value>  and  set lon <value>.)
+
+6. clock
+     Should show the right time. The helios history labels depend on the node running from boot, not on the clock, but a correct clock is good practice.
+
+7. advert
+     Sends an advert so nearby nodes learn about you.
+
+8. helios
+     Example: HELIOS 4.17V ~98% GOOD, steady, min 4.10V max 4.19V, up 0d 0h, 24 reads
+     Confirms the battery watch is working.
+
+9. neighbors
+     After a few minutes, lists the nodes this repeater hears. Empty list = nobody heard yet (check radio settings and antenna).
+
+================================================================
+PART 5 - BEFORE IT GOES ON THE ROOF
+================================================================
+[ ] Antenna attached, tight, pointing the right way (usually up).
+[ ] Battery (18650) installed with correct polarity; solar panel connected and facing the sun.
+[ ] Admin password changed.
+[ ] Name set, radio settings match your mesh, GPS fix obtained, location saved.
+[ ] "helios" shows GOOD and a sensible voltage.
+[ ] "neighbors" shows at least one node (if any are in range).
+[ ] Enclosure sealed; cable entries weather-proofed.
+[ ] Take a photo and write down the date, firmware version and location.
+
+REMEMBER: the helios history lives in RAM. Rebooting or reflashing erases it. Copy it out before you do either.
+
+================================================================
+PART 6 - DAILY AND LONG-TERM CHECKS
+================================================================
+helios            battery now, state, trend
+helios stats      last 24 hours min-max, LOW/CRITICAL counts
+helios history    hourly min-max (pages 1-6 = last 48 hours)
+stats-radio       radio counters, including noise floor
+neighbors         who is heard
+firmware          which version is running
+
+What good looks like: voltage dips overnight and climbs in sun; state stays GOOD; no LOW or CRITICAL counts.
+
+================================================================
+PART 7 - TROUBLESHOOTING
+================================================================
+Board never shows up as a USB drive
+    Use a data cable, try another USB port, double-tap RST faster. Charge the board a while if the battery is flat.
+
+Web flasher does not list the board or fails
+    Use Chrome or Edge. Close other programs that hold the serial port. Or use Method A.
+
+"firmware" shows the wrong version
+    The flash did not take, or you flashed a different file. Repeat the flash with the newest release.
+
+Nobody hears the node
+    Radio settings do not match your mesh; antenna missing or loose; node placed too low.
+
+GPS says "on, active, no fix"
+    Needs sky view and time; it can take several minutes the first time. Indoors it may never fix.
+
+"gps" commands say not found
+    You flashed the no-GPS firmware. Flash helios-gps.
+
+helios shows LOW or CRITICAL
+    Panel shaded, dirty, or facing wrong; several cloudy days; battery old or damaged. Check the voltage trend with helios stats.
+
+Reflashing to go back or recover
+    Repeat PART 2. A reflash resets the settings and the helios history, so write down your name, position and radio settings first.
+
+================================================================
+CHANGE LOG
+================================================================
+2026-10-19  First version (alpha4).
