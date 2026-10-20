@@ -48,18 +48,34 @@ int main() {
     Helios H; char r[160]; H.runCommand("", r, sizeof(r), 0, cap); CHECK(strstr(r, "no battery reading"));
     H.sample(3920, 1000); H.runCommand("", r, sizeof(r), 90001000, cap);
     CHECK(strstr(r, "3.92V")); CHECK(strstr(r, "GOOD")); CHECK(strstr(r, "up 1d 1h")); CHECK(strlen(r) < 150);
-    H.runCommand(" bogus", r, sizeof(r), 0, cap); CHECK(strstr(r, "helios [history]"));
+    H.runCommand(" bogus", r, sizeof(r), 0, cap); CHECK(strstr(r, "helios [history"));
   }
   { // hourly history keeps min/max per hour, newest first
     Helios H; g_n = 0; char r[160];
     H.sample(3900, 0); H.sample(3850, 60000); H.sample(3950, 120000);
     H.sample(3800, 3600000UL + 1000); H.sample(3780, 3600000UL + 61000);
     H.runCommand("history", r, sizeof(r), 3600000UL + 62000, cap);
-    CHECK(strstr(r, "OK")); CHECK(g_n == 2);
+    CHECK(strstr(r, "p1/6")); CHECK(strstr(r, "-0:3.78-3.80")); CHECK(strstr(r, "-1:3.85-3.95")); CHECK(strlen(r) < 150); CHECK(g_n == 2);
     CHECK(strstr(g_lines[0], "hour -0: 3.78V to 3.80V")); CHECK(strstr(g_lines[1], "hour -1: 3.85V to 3.95V"));
     // an hour that wrapped the 48-slot ring is not shown as a stale entry
     Helios G; g_n = 0; G.sample(3900, 0); G.sample(3700, 49UL * 3600000UL);
     G.history(cap, 49UL * 3600000UL); CHECK(g_n == 1);
+  }
+  { // paged history fits a 150-byte reply even when full, and bad pages are refused
+    Helios H; char r[150]; g_n = 0;
+    for (int h = 0; h < 60; h++) { H.sample(3900 + h, (uint32_t)h * 3600000UL); }
+    uint32_t now = 59UL * 3600000UL + 1000;
+    for (int pg = 1; pg <= 6; pg++) { char a[16]; snprintf(a, sizeof(a), "history %d", pg); H.runCommand(a, r, sizeof(r), now, cap); CHECK(strlen(r) < 149); CHECK(strstr(r, "-")); }
+    H.runCommand("history 1", r, sizeof(r), now, cap); CHECK(strstr(r, "-0:3.95-3.95"));
+    H.runCommand("history 9", r, sizeof(r), now, cap); CHECK(strstr(r, "page 1-6"));
+    H.runCommand("history 0", r, sizeof(r), now, cap); CHECK(strstr(r, "page 1-6"));
+  }
+  { // stats: 24h range and LOW/CRITICAL counts
+    Helios H; char r[150]; g_n = 0;
+    H.sample(3900, 0); for (int i = 0; i < 12; i++) H.sample(3400, 60000UL * (i + 1));
+    H.runCommand("stats", r, sizeof(r), 800000, cap);
+    CHECK(strstr(r, "last 1h")); CHECK(strstr(r, "CRITICAL 1x")); CHECK(strstr(r, "bad reads 0")); CHECK(strlen(r) < 149);
+    Helios E; E.runCommand("stats", r, sizeof(r), 0, cap); CHECK(strstr(r, "no data"));
   }
   if (fails) { printf("%d FAILED\n", fails); return 1; }
   printf("all tests passed\n");

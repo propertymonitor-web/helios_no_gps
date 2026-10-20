@@ -9,6 +9,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 namespace heliosfw {
@@ -127,16 +128,61 @@ class Helios {
     if (!shown) print("no history yet");
   }
 
-  // helios [history|help]
+  // History as a short reply that fits over the air: 8 hours per page, newest first.
+  // Each entry is "<hours ago>:<min>-<max>" in volts, e.g. "-3:3.78-3.80".
+  void historyReply(int page, char* out, size_t cap, uint32_t now) const {
+    const int PER = 8, PAGES = HOURS / PER;
+    if (!_started) { snprintf(out, cap, "no history yet"); return; }
+    if (page < 1 || page > PAGES) { snprintf(out, cap, "page 1-%d", PAGES); return; }
+    uint32_t cur = (uint32_t)(now - _t0) / 3600000UL;
+    size_t n = (size_t)snprintf(out, cap, "p%d/%d V min-max:", page, PAGES);
+    int shown = 0;
+    for (int k = 0; k < PER; k++) {
+      uint32_t back = (uint32_t)((page - 1) * PER + k);
+      if (back > cur) break;
+      int i = (cur - back) % HOURS;
+      if (!_slots[i].used || _slot_hour[i] != cur - back) continue;
+      if (n >= cap) break;
+      n += (size_t)snprintf(out + n, cap - n, " -%lu:%u.%02u-%u.%02u", (unsigned long)back,
+                            _slots[i].min_mv / 1000, (_slots[i].min_mv % 1000) / 10,
+                            _slots[i].max_mv / 1000, (_slots[i].max_mv % 1000) / 10);
+      shown++;
+    }
+    if (!shown && n < cap) snprintf(out + n, cap - n, " none yet");
+  }
+
+  // Last 24 hours at a glance, plus how often the battery has gone LOW or CRITICAL since start-up.
+  void stats(char* out, size_t cap, uint32_t now) const {
+    if (!_started) { snprintf(out, cap, "no data yet"); return; }
+    uint32_t cur = (uint32_t)(now - _t0) / 3600000UL;
+    uint16_t lo = 0, hi = 0; int hrs = 0;
+    for (uint32_t back = 0; back < 24 && back <= cur; back++) {
+      int i = (cur - back) % HOURS;
+      if (!_slots[i].used || _slot_hour[i] != cur - back) continue;
+      if (hrs == 0 || _slots[i].min_mv < lo) lo = _slots[i].min_mv;
+      if (hrs == 0 || _slots[i].max_mv > hi) hi = _slots[i].max_mv;
+      hrs++;
+    }
+    snprintf(out, cap, "last %dh: %u.%02uV-%u.%02uV, LOW %lux, CRITICAL %lux, bad reads %lu",
+             hrs, lo / 1000, (lo % 1000) / 10, hi / 1000, (hi % 1000) / 10,
+             (unsigned long)_low_events, (unsigned long)_crit_events, (unsigned long)_bad);
+  }
+
+  // helios [history [page]|stats]
   void runCommand(const char* args, char* reply, size_t cap, uint32_t now, void (*print)(const char*)) {
     while (*args == ' ') args++;
     if (*args == 0) {
       status(reply, cap, now);
-    } else if (strcmp(args, "history") == 0) {
-      history(print, now);
-      snprintf(reply, cap, "OK - %d hours kept, RAM only (lost on reboot)", HOURS);
+    } else if (strncmp(args, "history", 7) == 0 && (args[7] == 0 || args[7] == ' ')) {
+      const char* a = args + 7;
+      while (*a == ' ') a++;
+      int page = *a ? atoi(a) : 1;
+      if (page == 1 || *a == 0) history(print, now);   // the USB serial port also gets one line per hour
+      historyReply(page, reply, cap, now);
+    } else if (strcmp(args, "stats") == 0) {
+      stats(reply, cap, now);
     } else {
-      snprintf(reply, cap, "helios [history]");
+      snprintf(reply, cap, "helios [history [1-6]|stats]");
     }
   }
 
@@ -146,7 +192,7 @@ class Helios {
   float _ema = 0;
   uint16_t _raw = 0, _min = 0, _max = 0;
   bool _have_range = false;
-  uint32_t _reads = 0, _bad = 0;
+  uint32_t _reads = 0, _bad = 0, _low_events = 0, _crit_events = 0;
   State _state = ST_UNKNOWN;
   Trend _trend = TR_UNKNOWN;
   uint16_t _mark_mv = 0;
@@ -161,7 +207,12 @@ class Helios {
     else if (sm >= cfg.low_mv) want = ST_LOW;
     else want = ST_CRITICAL;
     // enum order is GOOD(1) < LOW(2) < CRITICAL(3), so a bigger value is a worse state
-    if (_state == ST_UNKNOWN || want > _state) { _state = want; return; }   // first reading, or getting worse
+    if (_state == ST_UNKNOWN || want > _state) {
+      _state = want;
+      if (want == ST_LOW) _low_events++;
+      if (want == ST_CRITICAL) _crit_events++;
+      return;
+    }   // first reading, or getting worse
     // getting better: only after clearing the threshold by the hysteresis margin
     if (want < _state) {   // improve one level at a time
       State up = (State)(_state - 1);

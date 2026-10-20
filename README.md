@@ -20,7 +20,8 @@ Download `firmware.uf2` from the [Releases](../../releases) page. Double-tap the
 | Command | What it does |
 |---|---|
 | `helios` | Battery mV, approximate %, state (GOOD/LOW/CRITICAL) and trend |
-| `helios history` | Last 48 hours, one line per hour with min and max mV (kept in RAM, cleared on reboot) |
+| `helios history [1-6]` | Hourly min-max volts, newest first, 8 hours per page, returned in the reply so it works over the air. Page 1 is the default (kept in RAM, cleared on reboot) |
+| `helios stats` | Last 24 h min-max, how many times it went LOW or CRITICAL since start-up, and bad reads |
 | `lodestar ...` | Uplink scoring commands from LODESTAR PULSAR |
 
 Defaults: GOOD at 3700 mV and up, LOW below 3500 mV, with 50 mV hysteresis so it doesn't flap. Sampled once a minute. Readings under 2.5 V or over 5 V are ignored as bad reads.
@@ -34,3 +35,10 @@ Run **Actions > Build ... > Run workflow**. Tick *publish* and enter a NEW tag t
 
 ## License
 Patches and added code follow MeshCore's license (MIT).
+
+## Other useful MeshCore commands
+These are standard MeshCore repeater commands, handy alongside HELIOS: `ver`, `board`, `clock`, `stats-core`, `stats-radio`, `stats-packets`, `neighbors`, `powersaving`, `log`.
+
+## Changes
+- **alpha2:** `helios history` now returns the hours in the reply (it only went to the USB serial port before, so it was invisible over the air); added `helios stats`.
+- **alpha1:** first release.
