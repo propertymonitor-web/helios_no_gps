@@ -1,0 +1,146 @@
+name: Build LODESTAR HELIOS (no GPS) firmware
+
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('HELIOS-NO-GPS: {0}', inputs.publish && inputs.release_tag || 'build only') || 'HELIOS-NO-GPS checks' }}"
+
+# Two kinds of run:
+#   * every push and pull request: the unit tests, plus a check that the patch still applies to the
+#     current MeshCore (about a minute, no firmware build)
+#   * "Run workflow" by hand: the same checks, then the full firmware build (about 6 minutes)
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the result as a GitHub Release anyone can download"
+        default: false
+        required: false
+        type: boolean
+      release_tag:
+        description: "NEW release tag, e.g. HELIOS-NO-GPS. Required when publishing; it must not exist yet"
+        default: ""
+        required: false
+        type: string
+      release_title:
+        description: "Release title"
+        default: "HELIOS-NO-GPS"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  HELIOS_VARIANT: nogps
+  FW_ENV: HELIOS_NoGps_repeater
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit-test the uplink scoring and the battery watch
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Ilodestar lodestar/test/test_lodestar.cpp -o lodestar_test
+          ./lodestar_test
+          g++ -std=c++17 -Wall -Wextra -Ihelios helios/test/test_helios.cpp -o helios_test
+          ./helios_test
+
+  patch-check:
+    name: Patch still applies to current MeshCore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Get MeshCore
+        run: git clone --depth 1 https://github.com/meshcore-dev/MeshCore.git
+      - name: Apply HELIOS
+        run: python tools/apply_helios.py --meshcore MeshCore --variant "$HELIOS_VARIANT"
+
+  build:
+    name: Build firmware
+    needs: [test, patch-check]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed only to publish a Release
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fail in seconds, not after the build, if the release cannot be made. This workflow only ever
+      # creates a NEW release: re-using a tag would swap the files but leave the old tag and notes.
+      - name: Check the release tag (only when publishing)
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          if [ -z "$TAG" ]; then
+            echo "::error::Publishing needs a release tag. Type a NEW one, for example HELIOS-NO-GPS."
+            exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::A release named $TAG already exists. Choose a new tag; this workflow never overwrites a release."
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tools
+        run: pip install platformio
+
+      - name: Get MeshCore
+        run: git clone --depth 1 https://github.com/meshcore-dev/MeshCore.git
+
+      - name: Apply HELIOS
+        run: python tools/apply_helios.py --meshcore MeshCore --variant "$HELIOS_VARIANT"
+
+      - name: Build firmware
+        working-directory: MeshCore
+        run: |
+          set -o pipefail
+          pio run -e "$FW_ENV" 2>&1 | tee ../build.log
+          # Nordic boards have no merged image: make the .uf2 the board's bootloader reads
+          python3 bin/uf2conv/uf2conv.py ".pio/build/$FW_ENV/firmware.hex" -c -o ".pio/build/$FW_ENV/firmware.uf2" -f 0xADA52840 2>&1 | tee -a ../build.log
+
+      - name: Show compile errors
+        if: failure()
+        run: |
+          grep -E "error|undefined reference|No such file" build.log | head -25 | while IFS= read -r l; do
+            echo "::error::${l:0:900}"
+          done
+
+      - name: Collect files
+        run: |
+          mkdir out
+          cp "MeshCore/.pio/build/$FW_ENV/firmware.uf2" out/
+          cp "MeshCore/.pio/build/$FW_ENV/firmware.zip" out/ 2>/dev/null || true
+          git -C MeshCore rev-parse HEAD > out/meshcore_commit.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HELIOS-NO-GPS-${{ env.FW_ENV }}
+          path: out/
+
+      - name: Publish release
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          TITLE: ${{ inputs.release_title }}
+        run: |
+          MC=$(cut -c1-10 out/meshcore_commit.txt)
+          FILES="out/firmware.uf2"; [ -f out/firmware.zip ] && FILES="$FILES out/firmware.zip"
+          NOTES="LODESTAR HELIOS solar-repeater firmware for the Seeed SenseCAP Solar Node P1 without GPS (GPS driver compiled out) with a read-only battery watch. Alpha test build ($FW_ENV) on MeshCore commit $MC, by FEAR REACTIVE.
+
+          To flash: double-tap the board's RST button so it appears as a USB drive (named Xiao-Boot or Solar Node), then drag firmware.uf2 onto it. Seeed's guide at https://wiki.seeedstudio.com/get_started_with_meshcore_solar_node/ also describes an erase step. firmware.zip is the same firmware as an update package for DFU tools.
+
+          This is ALPHA software and has not been proven in the field. Change the default admin password (password) first. See the README for setup, the helios and lodestar commands, and the test plan."
+          gh release create "$TAG" $FILES \
+            --target "$GITHUB_SHA" --title "$TITLE" --notes "$NOTES" --prerelease
