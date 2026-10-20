@@ -27,29 +27,39 @@ PART 2 - METHOD A: DRAG AND DROP (UF2)   <- the method Seeed documents
 2. Double-tap the RST (reset) button, quickly. The board restarts as a USB drive (named Xiao-Boot or Solar Node).
    If it does not show up, try a faster double-tap, or a different cable/port.
 3. Drag firmware.uf2 onto that drive.
-4. The drive disappears and the board reboots by itself. That means it worked.
+4. The drive disappears when the copy is done. That means it worked.
+   Seeed notes the board may NOT restart by itself after this. If it does not, unplug the USB cable and plug it back in
+   (or press RST once).
 5. Skip to PART 4 (first start-up).
 
 The drive also shows INFO_UF2.TXT, INDEX.HTM and CURRENT.UF2. They belong to the bootloader. Leave them alone.
-Seeed's guide also describes an erase step, useful when coming from other firmware:
-    https://wiki.seeedstudio.com/get_started_with_meshcore_solar_node/
+ERASE FIRST (recommended when the board has had other firmware on it): Seeed's guide has an "erase" UF2 file.
+Double-tap RST, drag the erase UF2 onto the drive, wait for the drive to disappear, then double-tap RST again and drag
+firmware.uf2 on as above. An erase wipes all saved settings, so write them down first.
+Seeed's guide (erase file and pictures): https://wiki.seeedstudio.com/get_started_with_meshcore_solar_node/
 
 ================================================================
 PART 3 - METHOD B: MESHCORE WEB FLASHER (ZIP)
 ================================================================
-NOTE: This route is not tested by the author for this board. If it does not work, use Method A.
+NOTE: The author has not used this route for HELIOS. Seeed's guide describes the same kind of flow (Enter DFU Mode, pick the
+port, Flash) in the MeshCore web flasher. If it does not work, use Method A.
 
 1. Open https://flasher.meshcore.io in Chrome or Edge.
 2. Choose Custom Firmware.
 3. Select firmware.zip (the Nordic DFU package; there is no .bin for this board).
-4. Connect the board and choose it in the serial-port list. If the board is not listed, double-tap RST first and try again.
+4. Connect the board and click "Enter DFU Mode" if the flasher offers it, then choose the port named "Solar Node" or
+   "TinyUSB serial" in the list. If the board is not listed, double-tap RST first and try again.
 5. Start the flash and wait until it says it is finished. Do not unplug until then.
 6. Continue to PART 4.
 
 ================================================================
 PART 4 - FIRST START-UP (do these in order)
 ================================================================
-Open a serial terminal on the board (USB), or log in as admin from a MeshCore companion app. Then:
+How to type commands:
+  - Over USB: in Chrome or Edge open https://flasher.meshcore.io, use its Console button and connect to the board's port
+    (any serial program works too: 115200 baud). Type  help  and press Enter; a list of commands means you are in.
+  - Over the air: log in to the repeater as admin from a MeshCore companion app, then send the command.
+Type each command exactly, one at a time, pressing Enter after each. Now:
 
 1. firmware
      Should reply: LODESTAR HELIOS alpha4 (P1-Pro, GPS)
@@ -89,7 +99,8 @@ Open a serial terminal on the board (USB), or log in as admin from a MeshCore co
 PART 5 - BEFORE IT GOES ON THE ROOF
 ================================================================
 [ ] Antenna attached, tight, pointing the right way (usually up).
-[ ] Battery (18650) installed with correct polarity; solar panel connected and facing the sun.
+[ ] Battery connected/installed as Seeed describes (the P1-Pro has a built-in battery; a plain P1 needs you to fit one);
+    solar panel connected and facing the sun.
 [ ] Admin password changed.
 [ ] Name set, radio settings match your mesh, GPS fix obtained, location saved.
 [ ] "helios" shows GOOD and a sensible voltage.
@@ -142,3 +153,4 @@ Reflashing to go back or recover
 CHANGE LOG
 ================================================================
 2026-10-19  First version (alpha4).
+2026-10-20  Added Seeed's erase step, DFU notes for the web flasher, how to open the console.
