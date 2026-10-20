@@ -3,7 +3,8 @@ by FEAR REACTIVE
 For: Seeed SenseCAP Solar Node P1 WITHOUT GPS (nRF52840), firmware "helios_no_gps"
 Current version: alpha4     Last updated: 2026-10-19
 
-ALPHA software. Not proven in the field. Keep a way to reach the node (USB cable) until you trust it.
+ALPHA software. The commands in this guide have been tested on a P1-Pro by the author (2026-10-20); a month-long roof test is under way.
+Keep a way to reach the node (USB cable) until you trust it.
 
 ================================================================
 PART 1 - WHAT YOU NEED
@@ -41,8 +42,8 @@ Seeed's guide (erase file and pictures): https://wiki.seeedstudio.com/get_starte
 ================================================================
 PART 3 - METHOD B: MESHCORE WEB FLASHER (ZIP)
 ================================================================
-NOTE: The author has not used this route for HELIOS. Seeed's guide describes the same kind of flow (Enter DFU Mode, pick the
-port, Flash) in the MeshCore web flasher. If it does not work, use Method A.
+NOTE: The author has flashed HELIOS this way with the MeshCore web flasher without problems. Seeed's guide describes the same
+kind of flow (Enter DFU Mode, pick the port, Flash). If it ever fails, use Method A.
 
 1. Open https://flasher.meshcore.io in Chrome or Edge.
 2. Choose Custom Firmware.
@@ -153,4 +154,4 @@ Reflashing to go back or recover
 CHANGE LOG
 ================================================================
 2026-10-19  First version (alpha4).
-2026-10-20  Added Seeed's erase step, DFU notes for the web flasher, how to open the console.
+2026-10-20  Marked web flasher and commands as tested on hardware. Added Seeed's erase step, DFU notes for the web flasher, how to open the console.

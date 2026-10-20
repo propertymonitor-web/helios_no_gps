@@ -8,7 +8,7 @@ The GPS driver is compiled out, so a plain P1 doesn't spend flash or power on it
 
 ## Status: ALPHA
 - The logic is unit-tested on a PC and the patch is checked against current MeshCore on every push.
-- On hardware, the author is field-testing the P1-Pro build for about a month. Treat results as unproven until then.
+- All commands have been tested on a real SenseCAP P1-Pro by the author, and the node has run without problems so far (2026-10-20). A month-long roof test is under way.
 - Battery percentages are an approximation from a Li-ion voltage curve (about 4.2 V full, 3.3 V empty), not a fuel gauge.
 
 ## Get the firmware
