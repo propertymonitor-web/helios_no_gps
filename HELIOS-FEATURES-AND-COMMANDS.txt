@@ -1,0 +1,86 @@
+LODESTAR HELIOS - FEATURES AND COMMANDS
+by FEAR REACTIVE
+Current version: alpha3   (no GPS)
+Last updated: 2026-10-19
+
+HELIOS is the LODESTAR PULSAR repeater firmware for the Seeed SenseCAP Solar Node (nRF52840), plus a read-only battery watch.
+It is ALPHA software. Battery percentages are approximate. Change the admin password (default: password) first.
+
+----------------------------------------------------------------
+WHAT HELIOS DOES
+----------------------------------------------------------------
+1. Everything a normal MeshCore repeater does (forwarding, adverts, neighbors, admin over the air or USB).
+2. LODESTAR uplink scoring (the "lodestar" command), carried over from PULSAR.
+3. Battery watch:
+   - Reads the battery voltage once a minute.
+   - Reports GOOD / LOW / CRITICAL (GOOD at 3.70 V and up, LOW from 3.50 V to 3.70 V, CRITICAL below 3.50 V; 50 mV hysteresis so it doesn't flip back and forth).
+   - Reports the trend (rising / steady / falling) over a 10-minute window; it needs 10 minutes of readings after boot.
+   - Keeps 48 hours of hourly min and max voltage, in RAM only (a reboot clears it).
+   - Counts how often the battery went LOW or CRITICAL since start-up.
+   - Ignores impossible readings (under 2.5 V or over 5 V).
+   - Read-only: it never changes the charger, the radio, forwarding or sleep behavior.
+
+NO-GPS build:
+   - The GPS driver is compiled out. Use this only if your board really has no GPS. The SenseCAP Solar Node P1-Pro HAS a GPS: use the helios-gps firmware on it.
+
+----------------------------------------------------------------
+HELIOS COMMANDS
+----------------------------------------------------------------
+firmware
+    Shows the firmware name and version.
+    Example reply:  LODESTAR HELIOS alpha3 (no GPS)
+
+helios
+    Battery status in one line.
+    Example reply:  HELIOS 4.17V ~98% GOOD, steady, min 4.10V max 4.19V, up 0d 0h, 24 reads
+    (voltage, approximate percent, state, trend, min and max since start-up, uptime, number of readings)
+
+helios history [1-6]
+    Hourly min-max voltage, newest first, 8 hours per page. "helios history" is page 1, "helios history 2" is the next 8 hours, up to page 6 (48 hours).
+    Example reply:  p1/6 V min-max: -0:3.78-3.80 -1:3.85-3.95 -2:3.90-4.05
+    Each entry is hours ago : lowest volts - highest volts. Hour 0 is the current (partial) hour.
+    Page 1 also prints one line per hour on the USB serial port.
+    Available only for hours since the last boot; cleared by a reboot.
+
+helios stats
+    Last 24 hours at a glance.
+    Example reply:  last 24h: 3.74V-4.12V, LOW 0x, CRITICAL 0x, bad reads 0
+
+lodestar
+    LODESTAR uplink scoring status and settings (see the LODESTAR PULSAR README).
+
+----------------------------------------------------------------
+USEFUL STANDARD MESHCORE COMMANDS
+----------------------------------------------------------------
+These come from MeshCore itself; HELIOS leaves them as they are.
+ver                 firmware build and date
+board               board name
+clock               node time (clock sync sets it)
+stats-core          system counters
+stats-radio         radio counters, including noise floor
+stats-packets       packet counters
+neighbors           nodes this repeater hears
+powersaving         show or set power saving
+log                 packet log (log start / log stop / log erase)
+advert              send an advert now
+password <new>      change the admin password
+reboot              restart (clears the helios history)
+
+(The gps commands are not available in this build.)
+
+----------------------------------------------------------------
+HOW TO USE THEM
+----------------------------------------------------------------
+- Over USB: open a serial terminal on the board and type the command.
+- Over the air: log in to the repeater from a MeshCore companion app as admin, then send the command.
+- Replies over the air are short, which is why history comes in pages of 8 hours.
+
+Daily check suggestion:  helios   then   helios stats   then   helios history   (and 2, 3 if you want older hours).
+Do this before any planned reboot; the history is lost when the node restarts.
+
+----------------------------------------------------------------
+CHANGE LOG
+----------------------------------------------------------------
+alpha3 (2026-10-19)  Added the "firmware" command (name and version). Added this document.
+alpha2 (2026-10-19)  "helios history" now returns the hours in the reply (it only went to USB serial before), 8 hours per page. Added "helios stats".
+alpha1 (2026-10-19)  First release: battery watch with "helios" and "helios history", on top of PULSAR.

@@ -83,8 +83,11 @@ def main():
                "  lodestar.loop(millis());\n"
                "  if (helios.due(millis())) helios.sample(board.getBattMilliVolts(), millis());   // Helios: one battery reading a minute\n",
                "Lodestar loop call in MyMesh.cpp")
+    label = "alpha3 (P1-Pro, GPS)" if args.variant == "gps" else "alpha3 (no GPS)"
     cpp = once(cpp, '} else if (memcmp(command, "lodestar", 8) == 0 && (command[8] == 0 || command[8] == \' \')) {',
-               '} else if (memcmp(command, "helios", 6) == 0 && (command[6] == 0 || command[6] == \' \')) {\n'
+               '} else if (strcmp(command, "firmware") == 0) {\n'
+               '    strcpy(reply, "LODESTAR HELIOS ' + label + '");\n'
+               '  } else if (memcmp(command, "helios", 6) == 0 && (command[6] == 0 || command[6] == \' \')) {\n'
                '    helios.runCommand(command + 6, reply, 150, millis(), lodestarSerialPrint);\n'
                '  } else if (memcmp(command, "lodestar", 8) == 0 && (command[8] == 0 || command[8] == \' \')) {',
                "lodestar command branch in MyMesh.cpp")
