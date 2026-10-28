@@ -1,6 +1,6 @@
 # LODESTAR HELIOS - NO GPS
 
-**ALPHA** firmware by FEAR REACTIVE for the Seeed SenseCAP Solar Node **P1 without GPS**, built on [MeshCore](https://github.com/meshcore-dev/MeshCore).
+**ALPHA** firmware by Wolf Reactive Systems (WRS) for the Seeed SenseCAP Solar Node **P1 without GPS**, built on [MeshCore](https://github.com/meshcore-dev/MeshCore).
 
 HELIOS is the LODESTAR PULSAR repeater (uplink scoring and the `lodestar` commands) plus a **read-only battery watch** for solar nodes. It watches the battery voltage, reports GOOD / LOW / CRITICAL, shows the trend (charging, discharging, steady) and keeps 48 hours of hourly min/max. It never changes how the radio or charger behaves.
 

@@ -1,5 +1,5 @@
 // Lodestar - mobile-repeater uplink scoring for MeshCore.
-// By FEAR REACTIVE.
+// By Wolf Reactive Systems (WRS).
 //
 // Header-only and free of Arduino / MeshCore dependencies so the logic can be
 // unit-tested on a PC (see lodestar/test). The MeshCore glue lives in

@@ -1,5 +1,5 @@
 LODESTAR HELIOS - FEATURES AND COMMANDS
-by FEAR REACTIVE
+by Wolf Reactive Systems (WRS)
 Current version: alpha4   (no GPS)
 Last updated: 2026-10-19
 

@@ -137,7 +137,7 @@ jobs:
         run: |
           MC=$(cut -c1-10 out/meshcore_commit.txt)
           FILES="out/firmware.uf2"; [ -f out/firmware.zip ] && FILES="$FILES out/firmware.zip"
-          NOTES="LODESTAR HELIOS solar-repeater firmware for the Seeed SenseCAP Solar Node P1 without GPS (GPS driver compiled out) with a read-only battery watch. Alpha test build ($FW_ENV) on MeshCore commit $MC, by FEAR REACTIVE.
+          NOTES="LODESTAR HELIOS solar-repeater firmware for the Seeed SenseCAP Solar Node P1 without GPS (GPS driver compiled out) with a read-only battery watch. Alpha test build ($FW_ENV) on MeshCore commit $MC, by Wolf Reactive Systems (WRS).
 
           To flash: double-tap the board's RST button so it appears as a USB drive (named Xiao-Boot or Solar Node), then drag firmware.uf2 onto it. Seeed's guide at https://wiki.seeedstudio.com/get_started_with_meshcore_solar_node/ also describes an erase step. firmware.zip is the same firmware as an update package for DFU tools.
 
