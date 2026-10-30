@@ -59,7 +59,7 @@ jobs:
       - name: Get MeshCore
         run: git clone --depth 1 https://github.com/meshcore-dev/MeshCore.git
       - name: Apply HELIOS
-        run: python tools/apply_helios.py --meshcore MeshCore --variant "$HELIOS_VARIANT"
+        run: python tools/apply_helios.py --meshcore MeshCore --variant "$HELIOS_VARIANT" && python tools/persist_ble_pin.py --meshcore MeshCore
 
   build:
     name: Build firmware
@@ -99,7 +99,7 @@ jobs:
         run: git clone --depth 1 https://github.com/meshcore-dev/MeshCore.git
 
       - name: Apply HELIOS
-        run: python tools/apply_helios.py --meshcore MeshCore --variant "$HELIOS_VARIANT"
+        run: python tools/apply_helios.py --meshcore MeshCore --variant "$HELIOS_VARIANT" && python tools/persist_ble_pin.py --meshcore MeshCore
 
       - name: Build firmware
         working-directory: MeshCore
